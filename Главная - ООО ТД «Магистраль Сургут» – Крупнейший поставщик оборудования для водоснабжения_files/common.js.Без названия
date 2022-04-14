@@ -1,0 +1,390 @@
+$(document).ready(function () {
+
+  var width = $(window).width();
+  var height = $(window).height();
+  $(window).resize(function () {
+    width = $(window).width();
+    height = $(window).height();
+  });
+
+  //после загрузке страницы убрать стандартные шрифты
+  $(".fonts-loaded").removeClass("fonts-loaded");
+
+
+  //Всплывашка
+  var params_fancybox = {
+    autoSize: true,
+    padding: 0,
+    fixed: false,
+    penEffect: 'fade',
+    closeEffect: 'fade',
+    nextEffect: 'fade',
+    prevEffect: 'fade',
+    autoCenter: false,
+    beforeShow: function () {},
+    afterClose: function () {
+      $(".popup__video").html();
+      $(".popup .input_error").removeClass('input_error');
+    }
+  };
+  $(".js-fancybox").fancybox(params_fancybox);
+
+  //рандомная картинка на главной
+  var main_img_number = Math.floor(Math.random() * Math.floor($(".main-img__img img").length));
+  $(".main-img__img img").eq(main_img_number).addClass("active");
+
+  //переключатель фотографий
+  $(".js-button-prev, .js-button-next").click(function () {
+    var imgs = $(this).parents(".s-katalogPage__right");
+    var img_index = imgs.find(".katalogPage-imgs__img.active").index();
+    var img_length = imgs.find(".katalogPage-imgs__img").length - 1;
+
+    if ($(this).hasClass("js-button-prev")) img_index--;
+    else img_index++;
+
+    if (img_index == img_length + 1) img_index = 0;
+    if (img_index == -1) img_index = img_length;
+
+    imgs.find(".katalogPage-imgs__img").removeClass("active").eq(img_index).addClass("active");
+
+
+    $(".katalogPage-numbers__number_active").html(addZerro(img_index + 1, 2));
+    $(".katalogPage-numbers__number_length").html(addZerro(img_length + 1, 2));
+  });
+
+  function addZerro(str, max) {
+    str = str.toString();
+    return str.length < max ? addZerro("0" + str, max) : str;
+  }
+
+
+  //видео
+  $('body').on('click', '.js-video:not(.js-fancybox)', function (e) {
+    e.preventDefault();
+    var video_link = $(this).data('src');
+    $(this).find(".video__iframe").html('<iframe src="' + video_link + '" allowfullscreen></iframe>');
+    $(this).addClass("active");
+  });
+  //видео в popup
+  $('body').on('click', '.js-video.js-fancybox', function (e) {
+    e.preventDefault();
+    var video_link = $(this).data('src');
+    $(".popup__video").html('<iframe src="' + video_link + '" allowfullscreen></iframe>');
+  });
+
+  //переключатель
+  $(".tab__item").click(function () {
+    var tab_wrap = $(this).parents(".tab-wrap").eq(0);
+    var index = 0;
+    if ($(this).data("index")) index = $(this).data("index") - 1;
+    else index = $(this).index();
+    $(".tab", tab_wrap).eq(0).find("> .tab__item").removeClass("tab__item_active").eq(index).addClass("tab__item_active");
+    $(".tab-items", tab_wrap).eq(0).find("> .tab-items__item").removeClass("tab-items__item_active").eq(index).addClass("tab-items__item_active");
+  });
+
+  //показать больше
+  $('body').on('click', '.js-show-block', function (e) {
+    e.preventDefault();
+    var section = $(this).parents(".more-wrap");
+    if (typeof section.html() == "undefined") section = $(this).parents("section");
+
+    var block_class = $(this).attr("data-class");
+    if (typeof block_class == "undefined") block_class = '';
+
+    if (section.find(block_class + ".more-wrap__hidden").not(".more-wrap__hidden_active").length == "0") {
+      section.find(block_class + ".more-wrap__hidden_active").each(function () {
+        if ($(this).css("display") == "block") $(this).slideToggle().removeClass("more-wrap__hidden_active");
+        else $(this).css("display", "none").removeClass("more-wrap__hidden_active");
+      });
+      $(this).find(".more__text").html($(this).data("textstart"));
+      $(this).removeClass("active");
+
+      return false;
+    }
+    var item = $(this).data("item");
+    section.find(block_class + '.more-wrap__hidden:not(.more-wrap__hidden_active):lt(' + item + ')').addClass("more-wrap__hidden_active").slideToggle();
+    if (section.find(block_class + ".more-wrap__hidden:not(.more-wrap__hidden_active)").length <= "0") {
+      $(this).find(".more__text").html($(this).data("textend"));
+      $(this).addClass("active");
+    }
+    return false;
+  });
+
+
+
+  //слайдер
+  $(".js-carousel-mainInfo").owlCarousel({
+    items: 1,
+    smartSpeed: 500,
+    margin: 30,
+    loop: true,
+    nav: false,
+    dots: true,
+    navText: '',
+    autoplay: true,
+    autoplayTimeout: 2400,
+    autoplayHoverPause: true,
+    responsive: {
+      0: {},
+      575: {},
+      767: {},
+      991: {},
+      1199: {}
+    }
+  });
+  //слайдер
+  $(".js-carousel-docs").owlCarousel({
+    items: 1,
+    smartSpeed: 500,
+    margin: 30,
+    loop: true,
+    nav: true,
+    dots: false,
+    navText: '',
+    responsive: {
+      0: {},
+      575: {},
+      767: {},
+      991: {},
+      1199: {}
+    }
+  });
+
+  //загрузить картинки в сдайдере
+  $("div[class*='js-carousel']").each(function () {
+    var ths = $(this);
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > ths.offset().top - $(window).height()) {
+        ths.find("img[data-src]").each(function () {
+          $(this).attr("src", $(this).attr("data-src")).removeAttr("data-src");
+        });
+      }
+    });
+  });
+
+
+
+  // генерируем формы
+  $('body').on('click', 'a[data-form].js-fancybox', function (e) {
+    e.preventDefault();
+
+    var form = $(this).data("form");
+    var title = $(this).data("title");
+    var subtitle = $(this).data("subtitle");
+    var btn = $(this).data("btn");
+    var gtag = $(this).data("gtag");
+    var href = $(this).attr("href");
+
+    $(href + " .form__form").attr('onsubmit', gtag);
+    $(href + " input[name='form']").val(form);
+    $(href + " .form__title").html(title);
+    $(href + " .form__descr").html(subtitle);
+    $(href + " .btn span span").html(btn);
+;
+
+  });
+
+  $('body').on('click', '.specialist-items__item', function (e) {
+    $(".specialist-items__item").removeClass('active');
+    $(this).addClass('active');
+    var name = $(this).find(".specialist-items__name").html();
+    $(".specialist__form input[name='specialist']").val(name);
+  });
+
+  //маска
+  $("input[name='phone']").mask("+7(n99) 999 99 99");
+
+
+  //добавить поле
+  $(".input-group input[type='checkbox']").on('change', function () {
+    $(this).parents(".input-group").find(".input").slideToggle();
+  });
+
+  //название файла
+  $('.input-file input[type="file"]').on('change', function () {
+    var splittedFakePath = this.value.split('\\');
+    var file_name = splittedFakePath[splittedFakePath.length - 1];
+    if (file_name == "") file_name = $(this).parent().find(".input-file__name").data("default");
+    $(this).parent().find(".input-file__name").html(file_name);
+  });
+
+  //убрать подсказку с инпута
+  $("input,textarea").focus(function () {
+    if (!$(this).hasClass("input_active")) {
+      $(this).addClass("input_active");
+    }
+  });
+  $("input,textarea").blur(function () {
+    if ($(this).hasClass("input_active")) {
+      $(this).removeClass("input_active");
+    }
+  });
+
+  //проверить поле
+  $(".required input, .required textarea").focus(function () {
+    $(this).parents(".input").removeClass("input_error");
+  });
+  $(".required select").change(function () {
+    $(this).parents(".input").removeClass("input_error");
+  });
+  $(".required input, .required textarea").blur(function () {
+    if ($(this).val() == "") {
+      $(this).parents(".input").addClass("input_error");
+    }
+  });
+
+  //добавить класс когда поле в фокусе
+  $(".input input, .input textarea").focus(function () {
+    $(this).parents(".input").addClass("input_focus");
+  });
+  $(".input input, .input textarea").blur(function () {
+    if ($(this).val() == "") {
+      $(this).parents(".input").removeClass("input_focus");
+    }
+  });
+
+
+  //Отправка формы
+  $(".js-form").submit(function (e) {
+    e.preventDefault;
+    var f = $(this);
+    var formData = new FormData($(this)[0]);
+    $('.input_error', f).removeClass('input_error');
+    var error = false;
+
+    $(".required", f).each(function () {
+      var value = $(this).find("input, textarea, select").val();
+      if ((value == '') && (typeof value != "undefined")) {
+        $(this).addClass('input_error');
+        error = true;
+      }
+    });
+
+    var conditions = $('input[name="conditions"]', f).prop('checked');
+    if ((!conditions) && (typeof conditions != "undefined")) {
+      $('input[name="conditions"]', f).parent().find(".input-checkbox__check").addClass('input_error');
+      error = true;
+    }
+
+    if (error) {
+      return false;
+    }
+
+    $.ajax({
+      type: "POST",
+      processData: false,
+      contentType: false,
+      url: "../wp-content/themes/magistral/php/submit.php",
+      data: formData
+    }).done(function () {
+
+      f.parents(".form").find(".form__thanks").addClass("active");
+      f.trigger('reset');
+      f.find(".input_focus").removeClass("input_focus");
+      setTimeout(function () {
+        if (f.parents(".popup").length != 0) f.parents(".form").find(".form__thanks").removeClass("active");
+      }, 3000);
+
+      try {
+        //ga('send', 'event', 'Send_Form', 'Send_Form');
+        gtag('event', 'send', {
+          'event_category': 'send_success',
+          'event_label': 'send_form'
+        });
+        yaCounter53748253.reachGoal('send');
+        console.log('успешно отправлена заявка');
+      } catch (e) {
+        console.log(e);
+      }
+    });
+    return false;
+  });
+
+  //закрепить шапку при скролле
+  $(window).scroll(function () {
+    if ($(window).scrollTop() > $(".header").outerHeight()) {
+      if ($(".header").hasClass("header_fixed") == false) {
+        $(".header").addClass("header_fixed");
+      }
+    } else $(".header").removeClass("header_fixed");
+  });
+
+  //скролл к блоку
+  $(".js-scroll").click(function (event) {
+    event.preventDefault();
+
+    //загружаем все фотографии
+    var img_download = false;
+    $("img[data-src]").each(function () {
+      $(this).attr("src", $(this).attr("data-src")).css("opacity", "1");
+      $(this).removeAttr("data-src");
+      img_download = true;
+    });
+
+    //делаем задержку для загрузки фотографий
+    var delay = 0;
+    if (img_download) delay = 500;
+
+    var ths = $(this);
+    setTimeout(function () {
+      var id = ths.attr('href');
+      if ((id == "#top") && ($(window).scrollTop() < 1)) return false;
+      var top = $(id).offset().top;
+      $('body,html').animate({
+        scrollTop: top
+      }, 1500);
+    }, delay);
+  });
+
+  //активный пункт меню
+  $(window).scroll(function () {
+    var $sections = $('section,header');
+    $sections.each(function (i, el) {
+      var top = $(el).offset().top;
+      var bottom = top + $(el).height();
+      var scroll = $(window).scrollTop() + 100;
+      var id = $(el).attr('id');
+
+      if (scroll > top && scroll < bottom) {
+        $('.menu__link.menu__link_active').removeClass('menu__link_active');
+        $('.menu__link[href="#' + id + '"]').addClass('menu__link_active');
+      }
+    })
+  });
+
+  //открыть меню
+  $(".js-menu-hamburger").click(function (e) {
+    e.preventDefault();
+    $(".menu-hamburger, .js-menu-overflow, .nav__menu-wrap").toggleClass("active");
+  });
+  $(".nav__menu-wrap a.js-scroll, .js-nav-close, .js-menu-overflow").click(function (e) {
+    e.preventDefault();
+    $(".menu-hamburger, .js-menu-overflow, .nav__menu-wrap").removeClass("active");
+  });
+
+
+
+
+  //скролл
+  var contactsPage_length = $(".contactsPage-items__scroll .contactsPage-items__item").length;
+  var contactsPage_width = (233 + 30) * contactsPage_length; //233 - width item / 30 - padding
+  $(".contactsPage-items__height").css("width", contactsPage_width);
+  var scrollPane = $(".js-scroll-contactsPage").jScrollPane({
+    showArrows: false,
+    autoReinitialise: true
+  });
+  var api = scrollPane.data('jsp');
+  scrollPane.bind(
+    'mousewheel',
+    function (event, delta, deltaX, deltaY) {
+      api.scrollByX(delta * -50);
+      return false;
+    }
+  );
+
+  //список
+  $('select').styler();
+
+  //загрузка изображение при прокрутке страницы 
+  $('img[data-src]').lazy();
+});

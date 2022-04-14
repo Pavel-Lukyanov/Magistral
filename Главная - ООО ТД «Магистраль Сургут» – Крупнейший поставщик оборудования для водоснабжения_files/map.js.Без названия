@@ -1,0 +1,67 @@
+//загрузки карты после загрузки страницы
+window.onload = function() { 
+ jQuery.loadScript = function (url, callback) {
+     jQuery.ajax({
+         url: url,
+         dataType: 'script',
+         success: callback,
+         async: true
+     });
+ }
+ setTimeout(function() {
+
+     if ($(".js-map").length <= 0) return false;
+
+     if (typeof someObject == 'undefined') $.loadScript('https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;loadByRequire=1', function(){
+         ymaps.ready(function () {
+
+             $(".js-map").each(function(){
+
+                 var x = $(this).attr("data-x");
+                 var y = $(this).attr("data-y");
+
+                 var map_id = $(this).attr("id");
+
+                 var width = $(window).width();
+                 var offset = 0;
+                 if (width>767)  {
+                    offset = -0.008;
+                }
+
+                var myMap = new ymaps.Map(map_id, {
+                 center: [x,y-offset],
+                 zoom: 15
+             });
+                myMap.controls.remove('mapTools');
+                myMap.controls.remove('typeSelector');
+                myMap.controls.remove('scaleLine');
+                myMap.controls.remove('searchControl');
+                myMap.controls.remove('trafficControl');
+                myMap.controls.remove('zoomControl');
+                myMap.controls.remove('geolocationControl');
+                myMap.behaviors.disable('scrollZoom');
+                if (width<=767) {
+                     myMap.behaviors.disable('drag');//для мобилок отключить скролл
+                 }
+                var uri = $('#yandex-container').attr('data-uri');
+                 //метка
+                 myPlacemark = new ymaps.Placemark([x,y], {
+                     hintContent: '',
+                     balloonContent: ''
+                 }, {
+                     iconLayout: 'default#image',
+                     iconImageHref: uri + '/img/icons/marker.svg',
+                     iconImageSize: [66, 94],
+                     iconImageOffset: [-33, -94]
+                 });
+
+                 myMap.geoObjects.add(myPlacemark);
+
+             });
+
+});
+});
+
+}, 1000);
+
+}
